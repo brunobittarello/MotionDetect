@@ -1,0 +1,1 @@
+docker cp MotionDetect/. motiondetect-local:/App/

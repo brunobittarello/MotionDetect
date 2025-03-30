@@ -8,6 +8,7 @@ import imutils
 import cv2
 import numpy as np
 import time
+from datetime import datetime
 
 # motion detection is comparision between previous_frame && current_frame
 
@@ -48,21 +49,13 @@ class MotionDetect:
         first_frame = None
         next_frame = None
         delay_counter = 0
+        self.print_frame_progress()
 
         while True: 
-            if self.curr_frame_num_mod == 0:
-                print(f"reading {self.curr_frame_num} of {self.total_frames}")
-            
-            ret, frame = self.cap.read()
-
             if self.curr_frame_num == self.total_frames:
                 break
-
-            if not ret:
-                print("CAPTURE ERROR")
-                break
-
-            frame = imutils.resize(frame, width = 750)
+            
+            frame = self.get_frame()
             gray = self.prepare_frame(frame)
 
             if first_frame is None: first_frame = gray    
@@ -88,6 +81,15 @@ class MotionDetect:
 
         self.close()
 
+    def get_frame(self):
+        ret, frame = self.cap.read()
+
+        if not ret:
+            print("CAPTURE ERROR")
+            return None
+
+        return imutils.resize(frame, width = 750) # TODO
+
     def prepare_frame(self, frame):
         gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
         gray = cv2.GaussianBlur(gray, (21, 21), 0)
@@ -97,8 +99,10 @@ class MotionDetect:
         self.curr_frame_num += 1
         if self.curr_frame_num_mod == 99:
             self.curr_frame_num_mod = 0
+            self.print_frame_progress()
         else:
             self.curr_frame_num_mod = 1
+
 
     def compare_frames(self, frame1, frame2):
         frame_delta = cv2.absdiff(frame1, frame2)
@@ -129,15 +133,17 @@ class MotionDetect:
             return
 
         print("write frame")
-        if self.out:
-            self.out.write(frame)
-            return
-
         if not self.out: # for the very first frame
             height, width, _ = frame.shape
             self.out = cv2.VideoWriter(self.output, self.fourcc, 30.0 ,(width, height))
+
+        first_frame = None
+        for x in range(self.movement_persistent_counter):
             self.out.write(frame)
-        
+            frame = self.get_frame()
+            self.nextFrame()
+
+        self.movement_persistent_counter = 0
 
     def saveSeparated(self):
         if self.movement_persistent_counter == 0 and out:
@@ -153,6 +159,9 @@ class MotionDetect:
             return True
         return False
 
+    def print_frame_progress(self):
+        print(f"reading {self.curr_frame_num} of {self.total_frames}")
+
     def close(self):
         # Cleanup when closed
         # cv2.waitKey(0)
@@ -166,5 +175,6 @@ class MotionDetect:
 
 md = MotionDetect()
 source = "Volumes/imggen/sample.mp4" # webcam| rtsp_url | video file as input'
-output = f'Volumes/imggen/{int(time.time())}_video.mp4'
+current_datetime = datetime.now().strftime("%Y-%m-%d %H-%M-%S")
+output = f'Volumes/imggen/{current_datetime}_video.mp4'
 md.apply(source, output)

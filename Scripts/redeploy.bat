@@ -1,1 +1,1 @@
-docker cp MotionDetect/. motiondetect-local:/App/
+docker cp MotionDetect/. motion_detect_cam-dev:/App/

@@ -37,6 +37,7 @@ class MotionDetect:
         self.out = None
         self.out_full = None
         self.current_hour = self.get_current_hour()
+        self.hours = 0
 
         self.frame_pivot = None
         self.frame_size_diff = 0
@@ -211,14 +212,24 @@ class MotionDetect:
         curr_hour = self.get_current_hour()
         if curr_hour == self.current_hour:
             return
-        self.saveFiles()
+
         self.current_hour = curr_hour
+        self.hours += 1
+        if self.hours != 4:
+            return
+
+        self.hours = 0
+        self.saveFiles()
 
     def saveFiles(self):
-        self.out.release()
-        self.out = None
-        self.out_full.release()
-        self.out_full = None
+        if self.out:
+            self.out.release()
+            self.out = None
+        if self.out_full:
+            self.out_full.release()
+            self.out_full = None
+        frame_processed_counter = 0
+        frame_saved_counter = 0
 
     def saveSeparated(self):
         if self.movement_persistent_counter == 0 and out:

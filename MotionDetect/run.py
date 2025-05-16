@@ -2,7 +2,7 @@ from motion_detect import MotionDetect
 from datetime import datetime
 
 # minSizeMovements = [25, 50, 100, 200, 400, 800, 1600, 3000, 6000, 9000, 12000, 15000, 20000]
-minSizeMovements = [400]
+minSizeMovements = [2000]
 for minSizeMovement in minSizeMovements:
     md = MotionDetect()
     md.MIN_SIZE_FOR_MOVEMENT = minSizeMovement

@@ -1,4 +1,5 @@
 FROM python:3.9.19
+ENV TZ="America/Sao_Paulo"
 
 RUN apt update
 RUN apt install -y ffmpeg

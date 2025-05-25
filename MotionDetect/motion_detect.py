@@ -18,12 +18,16 @@ os.environ["OPENCV_FFMPEG_CAPTURE_OPTIONS"] = "rtsp_transport;0"
 class MotionDetect:
     FRAMES_TO_PERSIST = 10 # Updates the previous frame in every 10th frame from the loop.
     MIN_SIZE_FOR_MOVEMENT = 200 #400 # 200 - higher is the number lesser is motion detection sensitivity. (window size)
+    MAX_SIZE_FOR_MOVEMENT = 200000
     MOVEMENT_DETECTED_PERSISTENCE = 100 # no. of frame count down before saving the video.
     LIMIT_TOTAL_FRAMES = -1
+    MUST_SEPARATE_CUT = True
     EXTENSION = "mp4"
+    FRAMES_BEFORE_CUT = MOVEMENT_DETECTED_PERSISTENCE + 100
 
     cap = None
-    output = ""
+    output_path = ""
+    camera_name = ""
     movement_persistent_counter = 0
 
     def __init__(self):
@@ -33,11 +37,13 @@ class MotionDetect:
         self.frame_processed_counter = 0
         self.frame_saved_counter = 0
         
-        self.movement_persistent_counter = 0        
+        self.movement_persistent_counter = 0  
+        self.cut_persistent_counter = 0      
         self.out = None
         self.out_full = None
         self.current_hour = self.get_current_hour()
         self.hours = 0
+        self.hours_to_cut = 0
 
         self.frame_pivot = None
         self.frame_size_diff = 0
@@ -51,13 +57,13 @@ class MotionDetect:
         # fourcc = cv2.VideoWriter_fourcc(*'XVID') # .avi
         self.font = cv2.FONT_HERSHEY_SIMPLEX # for display only
 
-    def apply(self, source, output):
+    def apply(self, source, output_path):
         self.cap = cv2.VideoCapture(source, cv2.CAP_FFMPEG) # Then start the webcam
         if not self.cap.isOpened():
             print("Failed to open")
             return
         
-        self.output = output
+        self.output_path = output_path
         if (self.LIMIT_TOTAL_FRAMES < 1):
             self.total_frames = int(self.cap.get(cv2.CAP_PROP_FRAME_COUNT)) # if stream, going to be negative
         else:
@@ -102,6 +108,10 @@ class MotionDetect:
                     self.frame_pivot = None
                 continue
             
+            if self.MUST_SEPARATE_CUT == True and self.cut_persistent_counter > 0:
+                self.cut_persistent_counter -= 1
+                self.cutRecord()
+
             self.process_frame(frame)
             if (self.frame_processed_counter % 50 == 0):
                 self.print_frame_progress()
@@ -131,8 +141,9 @@ class MotionDetect:
             return
         
         self.movement_persistent_counter = self.MOVEMENT_DETECTED_PERSISTENCE
+        self.cut_persistent_counter = self.FRAMES_BEFORE_CUT
         # self.display(frame)
-        # self.record(frame)
+        self.record(frame)
         # self.saveSeparated()
 
     def prepare_frame(self, frame):
@@ -164,7 +175,7 @@ class MotionDetect:
         biggestDiff = -1
         for c in cnts:
             diffSize = cv2.contourArea(c)
-            if diffSize > self.MIN_SIZE_FOR_MOVEMENT and diffSize > biggestDiff:
+            if diffSize > self.MIN_SIZE_FOR_MOVEMENT and diffSize > biggestDiff and diffSize < self.MAX_SIZE_FOR_MOVEMENT:
                 # removing timer
                 (x, y, w, h) = cv2.boundingRect(c)
                 # print(f"{x} {y} {w} {h} = {cv2.contourArea(c)}")
@@ -187,8 +198,7 @@ class MotionDetect:
         # print("write frame")
         if not self.out: # for the very first frame
             height, width, _ = frame.shape
-            current_datetime = datetime.now().strftime("%Y-%m-%d-%H")
-            self.out = cv2.VideoWriter(f"{self.output}-{current_datetime}-{self.MIN_SIZE_FOR_MOVEMENT}.{self.EXTENSION}", self.fourcc, 30.0 ,(width, height))
+            self.out = cv2.VideoWriter(self.getFileName(False), self.fourcc, 30.0 ,(width, height))
 
         self.frame_saved_counter += 1
         diff_area_Desc = ""
@@ -204,18 +214,31 @@ class MotionDetect:
     def recordFull(self, frame):
         if not self.out_full: # for the very first frame
             height, width, _ = frame.shape
-            current_datetime = datetime.now().strftime("%Y-%m-%d-%H")
-            self.out_full = cv2.VideoWriter(f"{self.output}-{current_datetime}-full.{self.EXTENSION}", self.fourcc, 30.0 ,(width, height))
+            self.out_full = cv2.VideoWriter(self.getFileName(True), self.fourcc, 30.0 ,(width, height))
         self.out_full.write(frame)
 
+    def getFileName(self, isFull):
+        current_datetime = datetime.now().strftime("%Y%m%d_%H%M%S")
+        extra = "-full" if isFull else ""
+        return f"{self.output_path}/{current_datetime}-{self.camera_name}{extra}.{self.EXTENSION}"
+
+    def cutRecord(self):
+        if not self.out:
+            return
+        self.out.release()
+        self.out = None
+
     def checkHour(self):
+        if self.hours_to_cut == 0:
+            return
+        
         curr_hour = self.get_current_hour()
         if curr_hour == self.current_hour:
             return
 
         self.current_hour = curr_hour
         self.hours += 1
-        if self.hours != 4:
+        if self.hours != self.hours_to_cut:
             return
 
         self.hours = 0

@@ -5,9 +5,17 @@ services:
         volumes:
             - ./Volumes:/App/Volumes
         network_mode: "host"
-    # motion_detect_cam01:
-    #     container_name: motion_detect_cam01
-    #     extends: motion_detect_cam-dev
+        restart: on-failure
+        environment:
+            - SOURCE=rtsp://192.168.0.43:8554/lucifer
+            - CAM_NAME=COMIDA
+            - MUST_SEPARATE_CUT=True
+    motion_detect_cam01:
+        container_name: motion_detect_cam01
+        extends: motion_detect_cam-dev
+        environment:
+            - SOURCE=rtsp://192.168.0.43:8554/caixa
+            - CAM_NAME=CAIXA
     # motion_detect_cam02:
     #     container_name: motion_detect_cam02
     #     extends: motion_detect_cam-dev

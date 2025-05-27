@@ -40,4 +40,4 @@ RUN ln -sf /bin/bash /bin/sh
 COPY MotionDetect/ App/
 WORKDIR /App
 # ENTRYPOINT ["tail", "-f", "/dev/null"]
-CMD [ "python", "./run.py"]
+CMD [ "python", "-u", "./run.py"]

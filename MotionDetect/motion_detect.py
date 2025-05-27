@@ -110,7 +110,8 @@ class MotionDetect:
             
             if self.MUST_SEPARATE_CUT == True and self.cut_persistent_counter > 0:
                 self.cut_persistent_counter -= 1
-                self.cutRecord()
+                if self.cut_persistent_counter == 0:
+                    self.cutRecord()
 
             self.process_frame(frame)
             if (self.frame_processed_counter % 50 == 0):
@@ -219,10 +220,12 @@ class MotionDetect:
 
     def getFileName(self, isFull):
         current_datetime = datetime.now().strftime("%Y%m%d_%H%M%S")
+        extra_folder = "/full" if isFull else ""
         extra = "-full" if isFull else ""
-        return f"{self.output_path}/{current_datetime}-{self.camera_name}{extra}.{self.EXTENSION}"
+        return f"{self.output_path}{extra_folder}/{current_datetime}-{self.camera_name}{extra}.{self.EXTENSION}"
 
     def cutRecord(self):
+        print("cutRecorded")
         if not self.out:
             return
         self.out.release()

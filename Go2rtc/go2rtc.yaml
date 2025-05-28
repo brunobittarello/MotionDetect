@@ -1,0 +1,12 @@
+streams:
+  caixa_source: rtsp://admin:password@192.168.10.10/onvif1
+  lucifer_source: rtsp://admin:password@192.168.10.60/onvif1
+  caixa: ffmpeg:caixa_source#video=copy#async
+  lucifer: ffmpeg:lucifer_source#video=copy#async
+  
+ffmpeg:
+  bin: ffmpeg\ffmpeg.exe
+  h264: "-codec:v libx264 -g:v 30 -preset:v superfast -tune:v zerolatency -profile:v main -level:v 4.1"
+  mycodec: "-any args that supported by ffmpeg..."
+  myinput: "-fflags nobuffer -flags low_delay -timeout 5000000 -i {input}"
+  myraw: "-ss 00:00:20"  

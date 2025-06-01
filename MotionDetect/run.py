@@ -4,9 +4,9 @@ import os
 
 source = os.getenv('SOURCE', '')
 cam_name = os.getenv('CAM_NAME', '')
-min_size_movement = os.getenv('MOVEMENT_SIZE_MIN', 2000)
-max_size_movement = os.getenv('MOVEMENT_SIZE_MAX', 200000)
-hour_cut = os.getenv('HOUR_CUT', 3)
+min_size_movement = int(os.getenv('MOVEMENT_SIZE_MIN', 2000))
+max_size_movement = int(os.getenv('MOVEMENT_SIZE_MAX', 200000))
+hour_cut = int(os.getenv('HOUR_CUT', 3))
 must_separate_cut = os.getenv('MUST_SEPARATE_CUT', "True").lower() in ("true", "1", "t")
 
 if source == '':

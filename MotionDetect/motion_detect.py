@@ -44,6 +44,8 @@ class MotionDetect:
         self.current_hour = self.get_current_hour()
         self.hours = 0
         self.hours_to_cut = 0
+        self.frame_skip_counter = 0
+        self.frame_skip_limit = 0
 
         self.frame_pivot = None
         self.frame_size_diff = 0
@@ -90,12 +92,14 @@ class MotionDetect:
             ret, frame = self.cap.read()
             if not ret:
                 print("Frame skipped")
+                self.frame_skip_counter += 1
+
+                if self.frame_skip_counter >= self.frame_skip_limit:
+                    self.saveFiles()
+                    return
                 continue
             
-            # frame = self.get_frame()
-            # if not frame.any():
-            #     print("Frame skipped")
-            #     continue
+            self.frame_skip_counter = 0
 
             self.checkHour()
             self.recordFull(frame)

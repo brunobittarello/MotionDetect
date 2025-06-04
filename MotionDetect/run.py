@@ -7,6 +7,7 @@ cam_name = os.getenv('CAM_NAME', '')
 min_size_movement = int(os.getenv('MOVEMENT_SIZE_MIN', 2000))
 max_size_movement = int(os.getenv('MOVEMENT_SIZE_MAX', 200000))
 hour_cut = int(os.getenv('HOUR_CUT', 3))
+frame_skip_limit = int(os.getenv('FRAME_SKIP_LIMIT', 100))
 must_separate_cut = os.getenv('MUST_SEPARATE_CUT', "True").lower() in ("true", "1", "t")
 
 if source == '':
@@ -20,6 +21,7 @@ md = MotionDetect()
 md.MIN_SIZE_FOR_MOVEMENT = min_size_movement
 md.MAX_SIZE_FOR_MOVEMENT = max_size_movement
 md.hours_to_cut = hour_cut
+md.frame_skip_limit = frame_skip_limit
 md.MUST_SEPARATE_CUT = must_separate_cut
 md.camera_name = cam_name
 
